@@ -1,6 +1,6 @@
 #!/bin/bash
 # ubuntu-config.d/apt.do_update_all.sh
-# Aptitude Package Manager
+# aptitude package manager - run update-all
 
 id="apt_do_update_all"
 message="Cleanly update repositories, install upgrades, and remove unused packages? [Y/n] "
