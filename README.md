@@ -14,4 +14,4 @@ A series of modular bash scripts to configure a fresh Ubuntu install. Can be run
 
 ## Config Modules
 * apt = Aptitude Package Manager
-* * update-all alias = 
+  * update-all alias = 
