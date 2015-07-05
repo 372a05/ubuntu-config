@@ -11,16 +11,20 @@ fi
 
 # Get inputs
 read -p "Primary normal, non-root username [$USER]: " user
-if [[ -z $user ]]; then user=$USER; fi
-
-# Init
-cd /tmp
+if [[ -z $user ]]; then 
+   user=$USER; 
+fi
 
 ## Update packages
-apt-get update -y
-apt-get dist-upgrade -y
-apt-get autoremove --purge -y
-apt-get autoclean
+read -n 1 -p "Update packages? [Y/n]: " yn
+if [[ $yn =~ [nN] ]]; then 
+   echo "Skipping updates."
+else
+   apt-get update -y
+   apt-get dist-upgrade -y
+   apt-get autoremove --purge -y
+   apt-get autoclean -y
+fi
 
 ## Install packages
 apt-get install dcfldd dnsutils nano net-tools sudo tcpdump strace wget \
@@ -51,12 +55,13 @@ __ALIASES__
 ## Setup Ipredator
 # (Input) VPN port [default=1194]
 read -p "Connect to IPredator VPN port [1194]: " ipredport
-if [[ -z $ipredport ]]; then ipredport=1194; fi
+if [[ ! $ipredport =~ [0-9]* ]]; then 
+   ipredport=1194; 
+fi
 
 # (Input) Use NAT server? [default=n]
 read -n 1 -p "Connect to IPredator NAT vpn server? [N/y]: " iprednat
-if [[ -z $iprednat ]]; then iprednat=n; fi
-if [[ $iprednat=="y" || $iprednat=="Y"]]; then 
+if [[ $iprednat =~ [yY]]; then 
    ipredhostpre="nat"
 else 
    ipredhostpre="pw"
@@ -65,7 +70,7 @@ fi
 # (Input) VPN Creds [leaving user or passwd blank will disable auto-login]
 read -p "Username for IPredator VPN (leave blank to prompt each login): " ipreduser
 read -p "Password for IPredator VPN (leave blank to prompt each login): " ipredpass
-if[[ -n $ipreduser && -n $ipredpass ]]; then
+if [[ -n $ipreduser && -n $ipredpass ]]; then
    echo -e "$ipreduser\n$ipredpass\n" > /etc/openvpn/config/ipredator.auth
    chmod -v 400 /etc/openvpn/config/ipredator.auth
    ipredauth="etc/openvpn/config/ipredator.auth"
@@ -74,6 +79,7 @@ else
 fi
 
 # Setup VPN config files
+cd /tmp
 mkdir -p /etc/openvpn/config
 
 # CA Certificate
