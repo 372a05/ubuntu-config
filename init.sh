@@ -13,6 +13,8 @@ fi
 read -p "Primary normal, non-root username [$USER]: " user
 if [[ -z $user ]]; then user=$USER; fi
 
+# Init
+cd /tmp
 
 ## Update packages
 apt-get update -y
@@ -47,32 +49,44 @@ alias update-all="sudo apt-get update -y && sudo apt-get dist-upgrade -y && sudo
 __ALIASES__
 
 ## Setup Ipredator
+# (Input) VPN port [default=1194]
 read -p "Connect to IPredator VPN port [1194]: " ipredport
 if [[ -z $ipredport ]]; then ipredport=1194; fi
-https://www.ipredator.se/static/downloads/openvpn/ubuntu/IPredator.se.ca.crt
+
+# (Input) Use NAT server? [default=n]
 read -n 1 -p "Connect to IPredator NAT vpn server? [N/y]: " iprednat
 if [[ -z $iprednat ]]; then iprednat=n; fi
 if [[ $iprednat=="y" || $iprednat=="Y"]]; then 
    ipredhostpre="nat"
-else
+else 
    ipredhostpre="pw"
 fi
 
+# (Input) VPN Creds [leaving user or passwd blank will disable auto-login]
 read -p "Username for IPredator VPN (leave blank to prompt each login): " ipreduser
 read -p "Password for IPredator VPN (leave blank to prompt each login): " ipredpass
 if[[ -n $ipreduser && -n $ipredpass ]]; then
    echo -e "$ipreduser\n$ipredpass\n" > /etc/openvpn/config/ipredator.auth
+   chmod -v 400 /etc/openvpn/config/ipredator.auth
    ipredauth="etc/openvpn/config/ipredator.auth"
 else 
    ipredauth=""
 fi
 
+# Setup VPN config files
 mkdir -p /etc/openvpn/config
-cd /tmp
+
+# CA Certificate
 wget -v -P /tmp/ https://www.ipredator.se/static/downloads/openvpn/ubuntu/IPredator.se.ca.crt
-wget -v -P /tmp/ https://www.ipredator.se/static/downloads/openvpn/ubuntu/IPredator.se.ta.key
 mv -v /tmp/IPredator.se.ca.crt /etc/openvpn/config/ipredator.ca.crt
+chmod -v 400 /etc/openvpn/config/ipredator.ca.crt
+
+# TLS key
+wget -v -P /tmp/ https://www.ipredator.se/static/downloads/openvpn/ubuntu/IPredator.se.ta.key
 mv -v /tmp/IPredator.se.ta.key /etc/openvpn/config/ipredator.ta.key
+chmod -v 400 /etc/openvpn/config/ipredator.ta.key
+
+# OpenVPN client config
 cat > /etc/openvpn/config/ipredator.ovpn << __IPRED_CONF__
 # VER: 0.25
 client
