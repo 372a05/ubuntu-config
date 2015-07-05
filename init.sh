@@ -38,7 +38,10 @@ fi
 ## Configure sudo
 read -p "Password for wheel (sudoers) group: " wheelpw
 groupadd -p$wheelpw wheel
-echo "%wheel  ALL=(ALL) NOPASSWD:ALL">>/etc/sudoers
+haswheel=`cat /etc/sudoers |grep %wheel`
+if [[ -z $haswheel ]]; then 
+   echo "%wheel ALL=(ALL) NOPASSWD:ALL">>/etc/sudoers
+fi
 usermod -a -G wheel $user
 
 ## Add bash aliases
@@ -138,3 +141,4 @@ ifconfig-nowarn
 #tls-version-min 1.2
 
 __IPRED_CONF__
+
