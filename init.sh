@@ -9,26 +9,31 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Get inputs
-read -p "Primary normal, non-root username [$USER]: " user
-if [[ -z $user ]]; then 
-   user=$USER; 
-fi
+# (Input) Username
+user1000=`awk -F":" '{ print $1 ":" $3 }' /etc/passwd | grep 1000| grep -oe "^[0-9a-zA-Z\_\-\.\@]*"`
+if [[ -z $user1000 ]]; then user1000=$USER; fi
+read -p "Primary normal, non-root username [$user1000]: " user
+if [[ -z $user ]]; then user=$user1000; fi
+echo -e "\nUsing $user for standard user..."
+
 
 ## Update packages
-read -n 1 -p "Update packages? [Y/n]: " yn
-if [[ $yn =~ [nN] ]]; then 
-   echo "Skipping updates."
+read -n1 -p "Update packages? [Y/n]: " yn
+if [ "${yn,,}" == "n" ]; then 
+   echo -e "\nSkipping updates..."
 else
    apt-get update -y
    apt-get dist-upgrade -y
    apt-get autoremove --purge -y
    apt-get autoclean -y
-fi
 
-## Install packages
-apt-get install dcfldd dnsutils nano net-tools sudo tcpdump strace wget \
-openvpn network-manager network-manager-gnome network-manager-openvpn network-manager-openvpn-gnome 
+   ## Install packages
+   read -n 1 -p "Install packages? [Y/n]: " yn
+   if [ "${yn,,}" != "n" ]; then
+      apt-get install dcfldd dnsutils nano net-tools sudo tcpdump strace wget \
+      openvpn network-manager network-manager-gnome network-manager-openvpn network-manager-openvpn-gnome 
+   fi
+fi
 
 ## Configure sudo
 read -p "Password for wheel (sudoers) group: " wheelpw
@@ -55,17 +60,17 @@ __ALIASES__
 ## Setup Ipredator
 # (Input) VPN port [default=1194]
 read -p "Connect to IPredator VPN port [1194]: " ipredport
-if [[ ! $ipredport =~ [0-9]* ]]; then 
-   ipredport=1194; 
-fi
+if [[ ! $ipredport =~ [0-9]+ ]]; then ipredport=1194; fi
+echo -e "\nUsing port $ipredport..."
 
 # (Input) Use NAT server? [default=n]
 read -n 1 -p "Connect to IPredator NAT vpn server? [N/y]: " iprednat
-if [[ $iprednat =~ [yY]]; then 
+if [ "${iprednat,,}" = "y" ]; then 
    ipredhostpre="nat"
 else 
    ipredhostpre="pw"
 fi
+echo -e "\nUsing host $ipredhostpre.openvpn.ipredator.* ..."
 
 # (Input) VPN Creds [leaving user or passwd blank will disable auto-login]
 read -p "Username for IPredator VPN (leave blank to prompt each login): " ipreduser
@@ -98,9 +103,9 @@ cat > /etc/openvpn/config/ipredator.ovpn << __IPRED_CONF__
 client
 dev tun0
 proto udp
-remote $ipredhostpre.openvpn.ipredator.se $ipredhostport
-remote $ipredhostpre.openvpn.ipredator.me $ipredhostport
-remote $ipredhostpre.openvpn.ipredator.es $ipredhostport
+remote $ipredhostpre.openvpn.ipredator.se $ipredport
+remote $ipredhostpre.openvpn.ipredator.me $ipredport
+remote $ipredhostpre.openvpn.ipredator.es $ipredport
 resolv-retry infinite
 nobind
 
@@ -133,4 +138,3 @@ ifconfig-nowarn
 #tls-version-min 1.2
 
 __IPRED_CONF__
-
